@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+// ==========================================
+// CREATE PROVIDER PROFILE
+// ==========================================
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -30,6 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check user exists
     const user = await prisma.user.findUnique({
       where: {
         id: userId,
@@ -39,7 +44,7 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json(
         {
-          error: "User not found.",
+          error: "User account not found.",
         },
         {
           status: 404,
@@ -47,10 +52,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Make sure user is a provider
     if (user.role !== "PROVIDER") {
       return NextResponse.json(
         {
-          error: "Only provider accounts can create a business profile.",
+          error:
+            "Only provider accounts can create a business profile.",
         },
         {
           status: 403,
@@ -58,6 +65,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check if provider profile already exists
     const existingProvider =
       await prisma.provider.findFirst({
         where: {
@@ -68,7 +76,8 @@ export async function POST(req: Request) {
     if (existingProvider) {
       return NextResponse.json(
         {
-          error: "You already have a provider profile.",
+          error:
+            "A provider profile already exists for this account.",
         },
         {
           status: 400,
@@ -76,6 +85,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create provider profile
     const provider = await prisma.provider.create({
       data: {
         business: business.trim(),
@@ -84,7 +94,7 @@ export async function POST(req: Request) {
         phone: phone.trim(),
 
         description: `${business.trim()} provides ${category.trim()} services at ${location.trim()}.`,
-        
+
         userId,
       },
     });
@@ -103,7 +113,60 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error: "Could not create provider profile.",
+        error:
+          "Could not create provider profile.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+// ==========================================
+// CHECK IF PROVIDER PROFILE EXISTS
+// ==========================================
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } =
+      new URL(req.url);
+
+    const userId =
+      searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error: "User ID is required.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const provider =
+      await prisma.provider.findFirst({
+        where: {
+          userId,
+        },
+      });
+
+    return NextResponse.json({
+      hasProfile: !!provider,
+      provider,
+    });
+  } catch (error) {
+    console.error(
+      "GET PROVIDER PROFILE ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Could not check provider profile.",
       },
       {
         status: 500,

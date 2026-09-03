@@ -35,9 +35,8 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [bookings, setBookings] = useState<BookingItem[]>([]);
-  const [provider, setProvider] = useState<ProviderInfo | null>(
-    null
-  );
+  const [provider, setProvider] =
+    useState<ProviderInfo | null>(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -67,7 +66,6 @@ export default function DashboardPage() {
         return;
       }
 
-      // Only providers can open dashboard
       if (user.role !== "PROVIDER") {
         router.push("/providers");
         return;
@@ -82,7 +80,8 @@ export default function DashboardPage() {
 
         if (!res.ok) {
           alert(
-            data.error || "Could not load dashboard."
+            data.error ||
+              "Could not load dashboard."
           );
 
           setLoading(false);
@@ -121,7 +120,8 @@ export default function DashboardPage() {
           method: "PATCH",
 
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
 
           body: JSON.stringify({
@@ -141,7 +141,6 @@ export default function DashboardPage() {
         return;
       }
 
-      // Update status immediately on the page
       setBookings((currentBookings) =>
         currentBookings.map((booking) =>
           booking.id === bookingId
@@ -175,27 +174,29 @@ export default function DashboardPage() {
   };
 
   // ==========================================
-  // STATUS STYLING
+  // STATUS STYLES
   // ==========================================
 
-  const getStatusStyle = (status: string) => {
+  const getStatusStyle = (
+    status: string
+  ) => {
     if (status === "PENDING") {
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-amber-100 text-amber-700 border-amber-200";
     }
 
     if (status === "CONFIRMED") {
-      return "bg-purple-100 text-purple-700";
+      return "bg-purple-100 text-purple-700 border-purple-200";
     }
 
     if (status === "COMPLETED") {
-      return "bg-green-100 text-green-700";
+      return "bg-green-100 text-green-700 border-green-200";
     }
 
     if (status === "CANCELLED") {
-      return "bg-red-100 text-red-700";
+      return "bg-red-100 text-red-700 border-red-200";
     }
 
-    return "bg-gray-100 text-gray-700";
+    return "bg-gray-100 text-gray-700 border-gray-200";
   };
 
   // ==========================================
@@ -203,7 +204,8 @@ export default function DashboardPage() {
   // ==========================================
 
   const pendingCount = bookings.filter(
-    (booking) => booking.status === "PENDING"
+    (booking) =>
+      booking.status === "PENDING"
   ).length;
 
   const confirmedCount = bookings.filter(
@@ -225,290 +227,483 @@ export default function DashboardPage() {
       <>
         <Navbar />
 
-        <main className="min-h-screen bg-purple-50 p-8">
-          <div className="max-w-6xl mx-auto">
-            <p>Loading dashboard...</p>
+        <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 flex items-center justify-center">
+
+          <div className="bg-white px-8 py-6 rounded-2xl shadow-lg border border-purple-100">
+
+            <div className="flex items-center gap-3">
+
+              <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+
+              <p className="font-medium text-gray-700">
+                Loading dashboard...
+              </p>
+
+            </div>
+
           </div>
+
         </main>
       </>
     );
   }
 
-  // ==========================================
-  // PAGE
-  // ==========================================
-
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-purple-50">
-        <div className="max-w-6xl mx-auto p-8">
+      <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
 
-          {/* HEADER */}
+        <div className="max-w-7xl mx-auto px-5 py-10 md:py-14">
 
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold">
-              Provider Dashboard
-            </h1>
+          {/* ==========================================
+              HEADER
+          ========================================== */}
 
-            {provider && (
-              <>
-                <p className="text-xl font-semibold mt-2">
-                  {provider.business}
+          <div className="mb-10">
+
+            <p className="text-purple-600 font-semibold uppercase tracking-wider text-sm mb-2">
+              Business Overview
+            </p>
+
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+
+              <div>
+
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+                  Provider Dashboard
+                </h1>
+
+                {provider && (
+                  <div className="mt-4">
+
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      {provider.business}
+                    </h2>
+
+                    <div className="flex flex-wrap items-center gap-3 mt-3">
+
+                      <span className="bg-white border border-purple-100 shadow-sm px-4 py-2 rounded-full text-sm text-purple-700 font-medium">
+                        ✨ {provider.category}
+                      </span>
+
+                      <span className="bg-white border border-gray-200 shadow-sm px-4 py-2 rounded-full text-sm text-gray-600 font-medium">
+                        📍 {provider.location}
+                      </span>
+
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+
+              <div className="bg-white border border-purple-100 shadow-sm rounded-2xl px-5 py-4">
+
+                <p className="text-sm text-gray-500">
+                  Total Appointments
                 </p>
 
-                <p className="text-gray-500">
-                  {provider.category} •{" "}
-                  {provider.location}
+                <p className="text-3xl font-bold text-purple-700 mt-1">
+                  {bookings.length}
                 </p>
-              </>
-            )}
+
+              </div>
+
+            </div>
+
           </div>
 
-          {/* SUMMARY CARDS */}
+          {/* ==========================================
+              SUMMARY CARDS
+          ========================================== */}
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
 
             {/* TOTAL */}
 
-            <div className="bg-white p-6 rounded-xl shadow">
-              <p className="text-gray-500">
-                Total Bookings
-              </p>
+            <div className="bg-white rounded-2xl shadow-md border border-purple-100 p-6 hover:shadow-lg transition">
 
-              <h2 className="text-3xl font-bold mt-2">
-                {bookings.length}
-              </h2>
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-gray-500 text-sm font-medium">
+                    Total Bookings
+                  </p>
+
+                  <p className="text-4xl font-bold text-gray-900 mt-3">
+                    {bookings.length}
+                  </p>
+
+                </div>
+
+                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl">
+                  📅
+                </div>
+
+              </div>
+
             </div>
 
             {/* PENDING */}
 
-            <div className="bg-white p-6 rounded-xl shadow">
-              <p className="text-gray-500">
-                Pending
-              </p>
+            <div className="bg-white rounded-2xl shadow-md border border-amber-100 p-6 hover:shadow-lg transition">
 
-              <h2 className="text-3xl font-bold mt-2 text-yellow-600">
-                {pendingCount}
-              </h2>
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-gray-500 text-sm font-medium">
+                    Pending
+                  </p>
+
+                  <p className="text-4xl font-bold text-amber-600 mt-3">
+                    {pendingCount}
+                  </p>
+
+                </div>
+
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">
+                  ⏳
+                </div>
+
+              </div>
+
             </div>
 
             {/* CONFIRMED */}
 
-            <div className="bg-white p-6 rounded-xl shadow">
-              <p className="text-gray-500">
-                Confirmed
-              </p>
+            <div className="bg-white rounded-2xl shadow-md border border-purple-100 p-6 hover:shadow-lg transition">
 
-              <h2 className="text-3xl font-bold mt-2 text-purple-600">
-                {confirmedCount}
-              </h2>
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-gray-500 text-sm font-medium">
+                    Confirmed
+                  </p>
+
+                  <p className="text-4xl font-bold text-purple-600 mt-3">
+                    {confirmedCount}
+                  </p>
+
+                </div>
+
+                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl">
+                  ✓
+                </div>
+
+              </div>
+
             </div>
 
             {/* COMPLETED */}
 
-            <div className="bg-white p-6 rounded-xl shadow">
-              <p className="text-gray-500">
-                Completed
-              </p>
+            <div className="bg-white rounded-2xl shadow-md border border-green-100 p-6 hover:shadow-lg transition">
 
-              <h2 className="text-3xl font-bold mt-2 text-green-600">
-                {completedCount}
-              </h2>
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <p className="text-gray-500 text-sm font-medium">
+                    Completed
+                  </p>
+
+                  <p className="text-4xl font-bold text-green-600 mt-3">
+                    {completedCount}
+                  </p>
+
+                </div>
+
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-2xl">
+                  ✅
+                </div>
+
+              </div>
+
             </div>
 
           </div>
 
-          {/* APPOINTMENTS HEADER */}
+          {/* ==========================================
+              APPOINTMENTS HEADER
+          ========================================== */}
 
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-2xl font-bold">
-              Appointments
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
 
-            <span className="text-gray-500">
+            <div>
+
+              <p className="text-purple-600 font-semibold uppercase tracking-wider text-sm">
+                Schedule
+              </p>
+
+              <h2 className="text-3xl font-bold text-gray-900 mt-1">
+                Appointments
+              </h2>
+
+              <p className="text-gray-500 mt-1">
+                Manage your student bookings and appointment status.
+              </p>
+
+            </div>
+
+            <span className="bg-white border border-gray-200 shadow-sm px-4 py-2 rounded-full text-sm text-gray-600">
               {bookings.length} booking
-              {bookings.length !== 1 ? "s" : ""}
+              {bookings.length !== 1
+                ? "s"
+                : ""}
             </span>
+
           </div>
 
-          {/* BOOKINGS */}
+          {/* ==========================================
+              BOOKINGS
+          ========================================== */}
 
           <div className="space-y-5">
 
             {bookings.map((booking) => (
               <div
                 key={booking.id}
-                className="bg-white p-6 rounded-xl shadow"
+                className="bg-white rounded-2xl border border-gray-100 shadow-md hover:shadow-lg transition overflow-hidden"
               >
 
-                <div className="flex flex-col md:flex-row md:justify-between gap-5">
+                <div className="p-6 md:p-7">
 
-                  {/* LEFT */}
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
-                  <div>
+                    {/* LEFT */}
 
-                    <h3 className="font-bold text-xl">
-                      {booking.service.name}
-                    </h3>
+                    <div className="flex gap-4">
 
-                    <p className="mt-2">
-                      Client:{" "}
-                      <span className="font-semibold">
-                        {booking.student.name}
+                      <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-purple-100 items-center justify-center text-2xl shrink-0">
+                        ✨
+                      </div>
+
+                      <div>
+
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-900">
+                          {booking.service.name}
+                        </h3>
+
+                        <p className="mt-2 text-gray-700">
+                          Client:{" "}
+                          <span className="font-semibold">
+                            {booking.student.name}
+                          </span>
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 mt-4">
+
+                          <span className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full text-sm">
+                            ⏱{" "}
+                            {
+                              booking.service
+                                .duration
+                            }{" "}
+                            minutes
+                          </span>
+
+                          <span className="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full text-sm font-semibold">
+                            GH₵
+                            {
+                              booking.service
+                                .price
+                            }
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    {/* RIGHT */}
+
+                    <div className="lg:text-right">
+
+                      <p className="font-semibold text-gray-900 text-lg">
+                        {new Date(
+                          booking.date
+                        ).toLocaleDateString()}
+                      </p>
+
+                      <p className="text-gray-500 mt-1">
+                        {new Date(
+                          booking.date
+                        ).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "2-digit",
+                            minute:
+                              "2-digit",
+                          }
+                        )}
+                      </p>
+
+                      <span
+                        className={`inline-block mt-3 px-3 py-1.5 rounded-full text-xs font-bold border ${getStatusStyle(
+                          booking.status
+                        )}`}
+                      >
+                        {booking.status}
                       </span>
-                    </p>
 
-                    <p className="text-gray-500 mt-1">
-                      Duration:{" "}
-                      {booking.service.duration} minutes
-                    </p>
-
-                    <p className="text-gray-500">
-                      Price: GH₵
-                      {booking.service.price}
-                    </p>
-
-                  </div>
-
-                  {/* RIGHT */}
-
-                  <div className="md:text-right">
-
-                    <p className="font-semibold">
-                      {new Date(
-                        booking.date
-                      ).toLocaleDateString()}
-                    </p>
-
-                    <p className="text-gray-500">
-                      {new Date(
-                        booking.date
-                      ).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-
-                    <span
-                      className={`inline-block mt-3 px-3 py-1 rounded-full text-sm font-semibold ${getStatusStyle(
-                        booking.status
-                      )}`}
-                    >
-                      {booking.status}
-                    </span>
+                    </div>
 
                   </div>
 
                 </div>
 
-                {/* =================================
-                    PENDING BUTTONS
-                ================================= */}
+                {/* ==========================================
+                    PENDING ACTIONS
+                ========================================== */}
 
-                {booking.status === "PENDING" && (
-                  <div className="flex flex-wrap gap-3 mt-5 border-t pt-5">
+                {booking.status ===
+                  "PENDING" && (
+                  <div className="bg-amber-50/60 border-t border-amber-100 px-6 md:px-7 py-5">
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateBookingStatus(
-                          booking.id,
-                          "CONFIRMED"
-                        )
-                      }
-                      className="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700"
-                    >
-                      Confirm Booking
-                    </button>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateBookingStatus(
-                          booking.id,
-                          "CANCELLED"
-                        )
-                      }
-                      className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700"
-                    >
-                      Cancel Booking
-                    </button>
+                      <p className="text-sm text-amber-700 font-medium">
+                        This appointment is waiting for your response.
+                      </p>
 
-                  </div>
-                )}
+                      <div className="flex flex-wrap gap-3">
 
-                {/* =================================
-                    CONFIRMED BUTTONS
-                ================================= */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBookingStatus(
+                              booking.id,
+                              "CONFIRMED"
+                            )
+                          }
+                          className="bg-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-purple-700 transition shadow-sm"
+                        >
+                          ✓ Confirm Booking
+                        </button>
 
-                {booking.status === "CONFIRMED" && (
-                  <div className="flex flex-wrap gap-3 mt-5 border-t pt-5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBookingStatus(
+                              booking.id,
+                              "CANCELLED"
+                            )
+                          }
+                          className="bg-white border border-red-200 text-red-600 px-5 py-2.5 rounded-xl font-semibold hover:bg-red-50 transition"
+                        >
+                          Cancel
+                        </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateBookingStatus(
-                          booking.id,
-                          "COMPLETED"
-                        )
-                      }
-                      className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
-                    >
-                      Mark Completed
-                    </button>
+                      </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateBookingStatus(
-                          booking.id,
-                          "CANCELLED"
-                        )
-                      }
-                      className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700"
-                    >
-                      Cancel Booking
-                    </button>
+                    </div>
 
                   </div>
                 )}
 
-                {/* COMPLETED */}
+                {/* ==========================================
+                    CONFIRMED ACTIONS
+                ========================================== */}
 
-                {booking.status === "COMPLETED" && (
-                  <div className="mt-5 border-t pt-5">
-                    <p className="text-green-600 font-semibold">
-                      ✓ Appointment completed
+                {booking.status ===
+                  "CONFIRMED" && (
+                  <div className="bg-purple-50/60 border-t border-purple-100 px-6 md:px-7 py-5">
+
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+                      <p className="text-sm text-purple-700 font-medium">
+                        This appointment has been confirmed.
+                      </p>
+
+                      <div className="flex flex-wrap gap-3">
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBookingStatus(
+                              booking.id,
+                              "COMPLETED"
+                            )
+                          }
+                          className="bg-green-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-700 transition shadow-sm"
+                        >
+                          ✓ Mark Completed
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateBookingStatus(
+                              booking.id,
+                              "CANCELLED"
+                            )
+                          }
+                          className="bg-white border border-red-200 text-red-600 px-5 py-2.5 rounded-xl font-semibold hover:bg-red-50 transition"
+                        >
+                          Cancel
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                )}
+
+                {/* ==========================================
+                    COMPLETED
+                ========================================== */}
+
+                {booking.status ===
+                  "COMPLETED" && (
+                  <div className="bg-green-50 border-t border-green-100 px-6 md:px-7 py-4">
+
+                    <p className="text-green-700 font-semibold">
+                      ✓ Appointment completed successfully
                     </p>
+
                   </div>
                 )}
 
-                {/* CANCELLED */}
+                {/* ==========================================
+                    CANCELLED
+                ========================================== */}
 
-                {booking.status === "CANCELLED" && (
-                  <div className="mt-5 border-t pt-5">
+                {booking.status ===
+                  "CANCELLED" && (
+                  <div className="bg-red-50 border-t border-red-100 px-6 md:px-7 py-4">
+
                     <p className="text-red-600 font-semibold">
                       This appointment was cancelled.
                     </p>
+
                   </div>
                 )}
 
               </div>
             ))}
 
-            {/* NO BOOKINGS */}
+            {/* ==========================================
+                NO BOOKINGS
+            ========================================== */}
 
             {bookings.length === 0 && (
-              <div className="bg-white p-10 rounded-xl shadow text-center">
+              <div className="bg-white border-2 border-dashed border-purple-200 rounded-3xl p-12 text-center shadow-sm">
 
-                <h3 className="text-xl font-semibold mb-2">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5">
+                  📅
+                </div>
+
+                <h3 className="text-2xl font-bold text-gray-900">
                   No appointments yet
                 </h3>
 
-                <p className="text-gray-500">
-                  New student bookings will appear here.
+                <p className="text-gray-500 max-w-md mx-auto mt-2">
+                  When students book one of your services, their appointments will appear here.
                 </p>
 
               </div>

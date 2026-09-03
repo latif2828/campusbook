@@ -10,64 +10,75 @@ export default function ProviderSetupPage() {
   const [business, setBusiness] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
+  const [phone, setPhone] = useState("");
   const [userId, setUserId] = useState("");
 
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
-    const storedUser =
-      localStorage.getItem("user");
+    const storedUser = localStorage.getItem("user");
 
     if (!storedUser) {
       router.push("/login");
       return;
     }
 
-    const user = JSON.parse(storedUser);
+    try {
+      const user = JSON.parse(storedUser);
 
-    if (user.role !== "PROVIDER") {
-      router.push("/providers");
-      return;
+      if (user.role !== "PROVIDER") {
+        router.push("/providers");
+        return;
+      }
+
+      setUserId(user.id);
+    } catch (error) {
+      console.error("USER ERROR:", error);
+
+      localStorage.removeItem("user");
+      router.push("/login");
     }
-
-    setUserId(user.id);
   }, [router]);
 
   const createProfile = async () => {
     if (
-      !business ||
+      !business.trim() ||
       !category ||
-      !location
+      !location.trim() ||
+      !phone.trim()
     ) {
       alert("Please complete all fields.");
       return;
     }
 
+    setSaving(true);
+
     try {
-      const res = await fetch(
-        "/api/provider-profile",
-        {
-          method: "POST",
+      const res = await fetch("/api/provider-profile", {
+        method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-          body: JSON.stringify({
-            userId,
-            business,
-            category,
-            location,
-          }),
-        }
-      );
+        body: JSON.stringify({
+          userId,
+          business: business.trim(),
+          category,
+          location: location.trim(),
+          phone: phone.trim(),
+        }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
         alert(
           data.error ||
-            "Could not create profile."
+            "Could not create provider profile."
         );
+
+        setSaving(false);
         return;
       }
 
@@ -76,11 +87,17 @@ export default function ProviderSetupPage() {
       );
 
       router.push("/dashboard");
+      router.refresh();
     } catch (error) {
-      console.error(error);
+      console.error(
+        "CREATE PROVIDER PROFILE ERROR:",
+        error
+      );
 
       alert("Something went wrong.");
     }
+
+    setSaving(false);
   };
 
   return (
@@ -95,9 +112,10 @@ export default function ProviderSetupPage() {
           </h1>
 
           <p className="text-gray-500 mb-6">
-            Add information about your
-            service business.
+            Add information about your service business.
           </p>
+
+          {/* BUSINESS NAME */}
 
           <label className="block font-semibold mb-2">
             Business Name
@@ -105,13 +123,15 @@ export default function ProviderSetupPage() {
 
           <input
             type="text"
-            placeholder="Example: Glow Nails"
+            placeholder="Example: LGraphics"
             value={business}
             onChange={(e) =>
               setBusiness(e.target.value)
             }
             className="w-full border p-3 rounded-lg mb-5"
           />
+
+          {/* CATEGORY */}
 
           <label className="block font-semibold mb-2">
             Service Category
@@ -152,18 +172,24 @@ export default function ProviderSetupPage() {
               Makeup Artist
             </option>
 
+            <option value="Photographer">
+              Photographer
+            </option>
+
             <option value="Tutor">
               Tutor
             </option>
 
-            <option value="Photographer">
-              Photographer
+            <option value="Graphic Designer">
+              Graphic Designer
             </option>
 
             <option value="Other">
               Other
             </option>
           </select>
+
+          {/* LOCATION */}
 
           <label className="block font-semibold mb-2">
             Location
@@ -176,16 +202,38 @@ export default function ProviderSetupPage() {
             onChange={(e) =>
               setLocation(e.target.value)
             }
+            className="w-full border p-3 rounded-lg mb-5"
+          />
+
+          {/* PHONE */}
+
+          <label className="block font-semibold mb-2">
+            Phone Number
+          </label>
+
+          <input
+            type="tel"
+            placeholder="Example: 0241234567"
+            value={phone}
+            onChange={(e) =>
+              setPhone(e.target.value)
+            }
             className="w-full border p-3 rounded-lg mb-6"
           />
+
+          {/* CREATE BUTTON */}
 
           <button
             type="button"
             onClick={createProfile}
-            className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold"
+            disabled={saving}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create Business Profile
+            {saving
+              ? "Creating Profile..."
+              : "Create Business Profile"}
           </button>
+
         </div>
       </main>
     </>

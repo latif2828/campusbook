@@ -10,13 +10,15 @@ export async function POST(req: Request) {
       business,
       category,
       location,
+      phone,
     } = body;
 
     if (
       !userId ||
       !business ||
       !category ||
-      !location
+      !location ||
+      !phone
     ) {
       return NextResponse.json(
         {
@@ -76,9 +78,13 @@ export async function POST(req: Request) {
 
     const provider = await prisma.provider.create({
       data: {
-        business,
-        category,
-        location,
+        business: business.trim(),
+        category: category.trim(),
+        location: location.trim(),
+        phone: phone.trim(),
+
+        description: `${business.trim()} provides ${category.trim()} services at ${location.trim()}.`,
+        
         userId,
       },
     });

@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 type ServiceItem = {
   id: string;
@@ -18,7 +26,11 @@ type ProviderItem = {
   services: ServiceItem[];
 };
 
-export default function BookingPage() {
+// ==========================================
+// BOOKING CONTENT
+// ==========================================
+
+function BookingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -27,29 +39,56 @@ export default function BookingPage() {
   const [provider, setProvider] =
     useState<ProviderItem | null>(null);
 
-  const [serviceId, setServiceId] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [serviceId, setServiceId] =
+    useState("");
+
+  const [date, setDate] =
+    useState("");
+
+  const [time, setTime] =
+    useState("");
 
   const [availableSlots, setAvailableSlots] =
     useState<string[]>([]);
 
-  const [loading, setLoading] = useState(true);
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [slotMessage, setSlotMessage] = useState("");
+  const [loadingSlots, setLoadingSlots] =
+    useState(false);
 
+  const [slotMessage, setSlotMessage] =
+    useState("");
+
+  // ==========================================
   // LOAD PROVIDER
+  // ==========================================
+
   useEffect(() => {
     const loadProvider = async () => {
-      const storedUser = localStorage.getItem("user");
+      const storedUser =
+        localStorage.getItem("user");
 
       if (!storedUser) {
         router.push("/login");
         return;
       }
 
-      const user = JSON.parse(storedUser);
+      let user;
+
+      try {
+        user = JSON.parse(storedUser);
+      } catch (error) {
+        console.error(
+          "USER ERROR:",
+          error
+        );
+
+        localStorage.removeItem("user");
+        router.push("/login");
+
+        return;
+      }
 
       if (user.role !== "STUDENT") {
         router.push("/dashboard");
@@ -58,7 +97,9 @@ export default function BookingPage() {
 
       if (!providerId) {
         alert("Provider not selected.");
+
         router.push("/providers");
+
         return;
       }
 
@@ -76,6 +117,7 @@ export default function BookingPage() {
           );
 
           setLoading(false);
+
           return;
         }
 
@@ -95,138 +137,183 @@ export default function BookingPage() {
     loadProvider();
   }, [providerId, router]);
 
-  // LOAD AVAILABLE TIMES
+  // ==========================================
+  // LOAD AVAILABLE SLOTS
+  // ==========================================
+
   useEffect(() => {
-    const loadAvailableSlots = async () => {
-      // Reset selected time whenever
-      // service/date changes
-      setTime("");
-      setAvailableSlots([]);
-      setSlotMessage("");
+    const loadAvailableSlots =
+      async () => {
+        setTime("");
+        setAvailableSlots([]);
+        setSlotMessage("");
 
-      if (!providerId || !serviceId || !date) {
-        return;
-      }
-
-      setLoadingSlots(true);
-
-      try {
-        const res = await fetch(
-          `/api/available-slots?providerId=${providerId}&serviceId=${serviceId}&date=${date}`
-        );
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setSlotMessage(
-            data.error ||
-              "Could not load available times."
-          );
-
-          setLoadingSlots(false);
+        if (
+          !providerId ||
+          !serviceId ||
+          !date
+        ) {
           return;
         }
 
-        setAvailableSlots(data.slots || []);
+        setLoadingSlots(true);
 
-        if (data.message) {
-          setSlotMessage(data.message);
-        } else if (
-          !data.slots ||
-          data.slots.length === 0
-        ) {
+        try {
+          const res = await fetch(
+            `/api/available-slots?providerId=${providerId}&serviceId=${serviceId}&date=${date}`
+          );
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            setSlotMessage(
+              data.error ||
+                "Could not load available times."
+            );
+
+            setLoadingSlots(false);
+
+            return;
+          }
+
+          setAvailableSlots(
+            data.slots || []
+          );
+
+          if (data.message) {
+            setSlotMessage(
+              data.message
+            );
+          } else if (
+            !data.slots ||
+            data.slots.length === 0
+          ) {
+            setSlotMessage(
+              "No available times for this date."
+            );
+          }
+        } catch (error) {
+          console.error(
+            "LOAD SLOTS ERROR:",
+            error
+          );
+
           setSlotMessage(
-            "No available times for this date."
+            "Could not load available times."
           );
         }
-      } catch (error) {
-        console.error(
-          "LOAD SLOTS ERROR:",
-          error
-        );
 
-        setSlotMessage(
-          "Could not load available times."
-        );
-      }
-
-      setLoadingSlots(false);
-    };
+        setLoadingSlots(false);
+      };
 
     loadAvailableSlots();
-  }, [providerId, serviceId, date]);
+  }, [
+    providerId,
+    serviceId,
+    date,
+  ]);
 
+  // ==========================================
   // CREATE BOOKING
-  const bookAppointment = async () => {
-    const storedUser = localStorage.getItem("user");
+  // ==========================================
 
-    if (!storedUser) {
-      router.push("/login");
-      return;
-    }
+  const bookAppointment =
+    async () => {
+      const storedUser =
+        localStorage.getItem("user");
 
-    const user = JSON.parse(storedUser);
-
-    if (
-      !providerId ||
-      !serviceId ||
-      !date ||
-      !time
-    ) {
-      alert(
-        "Please select a service, date and time."
-      );
-
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          studentId: user.id,
-          providerId,
-          serviceId,
-          date,
-          time,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Booking failed.");
+      if (!storedUser) {
+        router.push("/login");
         return;
       }
 
-      alert(
-        "Appointment booked successfully!"
-      );
+      const user =
+        JSON.parse(storedUser);
 
-      router.push("/my-bookings");
-    } catch (error) {
-      console.error(
-        "BOOKING ERROR:",
-        error
-      );
+      if (
+        !providerId ||
+        !serviceId ||
+        !date ||
+        !time
+      ) {
+        alert(
+          "Please select a service, date and time."
+        );
 
-      alert("Something went wrong.");
-    }
-  };
+        return;
+      }
 
-  const formatTime = (value: string) => {
-    const [hourString, minute] =
-      value.split(":");
+      try {
+        const res = await fetch(
+          "/api/bookings",
+          {
+            method: "POST",
 
-    const hour = Number(hourString);
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              studentId: user.id,
+              providerId,
+              serviceId,
+              date,
+              time,
+            }),
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+          alert(
+            data.error ||
+              "Booking failed."
+          );
+
+          return;
+        }
+
+        alert(
+          "Appointment booked successfully!"
+        );
+
+        router.push(
+          "/my-bookings"
+        );
+      } catch (error) {
+        console.error(
+          "BOOKING ERROR:",
+          error
+        );
+
+        alert(
+          "Something went wrong."
+        );
+      }
+    };
+
+  // ==========================================
+  // FORMAT TIME
+  // ==========================================
+
+  const formatTime = (
+    value: string
+  ) => {
+    const [
+      hourString,
+      minute,
+    ] = value.split(":");
+
+    const hour =
+      Number(hourString);
 
     const period =
-      hour >= 12 ? "PM" : "AM";
+      hour >= 12
+        ? "PM"
+        : "AM";
 
     const displayHour =
       hour % 12 || 12;
@@ -234,15 +321,21 @@ export default function BookingPage() {
     return `${displayHour}:${minute} ${period}`;
   };
 
-  // Prevent selecting dates before today
-  const today = new Date()
-    .toISOString()
-    .split("T")[0];
+  const today =
+    new Date()
+      .toISOString()
+      .split("T")[0];
+
+  // ==========================================
+  // LOADING
+  // ==========================================
 
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-purple-50">
-        <p>Loading provider...</p>
+        <p>
+          Loading provider...
+        </p>
       </main>
     );
   }
@@ -250,13 +343,20 @@ export default function BookingPage() {
   if (!provider) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-purple-50">
-        <p>Provider not found.</p>
+        <p>
+          Provider not found.
+        </p>
       </main>
     );
   }
 
+  // ==========================================
+  // PAGE
+  // ==========================================
+
   return (
     <main className="min-h-screen bg-purple-50 flex items-center justify-center p-6">
+
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
 
         <h1 className="text-3xl font-bold mb-2">
@@ -281,7 +381,9 @@ export default function BookingPage() {
         <select
           value={serviceId}
           onChange={(e) =>
-            setServiceId(e.target.value)
+            setServiceId(
+              e.target.value
+            )
           }
           className="w-full border p-3 rounded-lg mb-4"
         >
@@ -289,16 +391,21 @@ export default function BookingPage() {
             Select Service
           </option>
 
-          {provider.services.map((service) => (
-            <option
-              key={service.id}
-              value={service.id}
-            >
-              {service.name} - GH₵
-              {service.price} -{" "}
-              {service.duration} mins
-            </option>
-          ))}
+          {provider.services.map(
+            (service) => (
+              <option
+                key={service.id}
+                value={service.id}
+              >
+                {service.name}
+                {" - "}GH₵
+                {service.price}
+                {" - "}
+                {service.duration}
+                {" mins"}
+              </option>
+            )
+          )}
         </select>
 
         {/* DATE */}
@@ -312,7 +419,9 @@ export default function BookingPage() {
           min={today}
           value={date}
           onChange={(e) =>
-            setDate(e.target.value)
+            setDate(
+              e.target.value
+            )
           }
           className="w-full border p-3 rounded-lg mb-4"
         />
@@ -326,7 +435,9 @@ export default function BookingPage() {
         <select
           value={time}
           onChange={(e) =>
-            setTime(e.target.value)
+            setTime(
+              e.target.value
+            )
           }
           disabled={
             !serviceId ||
@@ -342,14 +453,18 @@ export default function BookingPage() {
               : "Select Time"}
           </option>
 
-          {availableSlots.map((slot) => (
-            <option
-              key={slot}
-              value={slot}
-            >
-              {formatTime(slot)}
-            </option>
-          ))}
+          {availableSlots.map(
+            (slot) => (
+              <option
+                key={slot}
+                value={slot}
+              >
+                {formatTime(
+                  slot
+                )}
+              </option>
+            )
+          )}
         </select>
 
         {slotMessage && (
@@ -362,11 +477,13 @@ export default function BookingPage() {
           <div className="mb-4" />
         )}
 
-        {/* CONFIRM BUTTON */}
+        {/* CONFIRM */}
 
         <button
           type="button"
-          onClick={bookAppointment}
+          onClick={
+            bookAppointment
+          }
           disabled={
             !serviceId ||
             !date ||
@@ -379,5 +496,26 @@ export default function BookingPage() {
 
       </div>
     </main>
+  );
+}
+
+// ==========================================
+// MAIN PAGE
+// Suspense fixes Vercel/Next.js prerendering
+// ==========================================
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-purple-50">
+          <p>
+            Loading booking page...
+          </p>
+        </main>
+      }
+    >
+      <BookingContent />
+    </Suspense>
   );
 }
